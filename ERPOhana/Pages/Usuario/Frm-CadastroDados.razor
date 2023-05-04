@@ -1,0 +1,302 @@
+﻿@page "/Cadastro/Dados/{opcao}/{id}"
+
+@using Category.Classes
+@using ERPOhama.Service
+@using Newtonsoft.Json
+@using DocumentValidator
+
+@using static Category.Classes.Cadastro
+
+
+@inject ServiceCadastro SerCadastro
+@inject ServiceLocalizar SerLocalizar
+
+@inject NavigationManager Navegacao
+
+@inject ISnackbar Snackbar
+
+
+<MudGrid Justify="Justify.Center">
+
+    <MudPaper Class="pa-4 blockcard" Style="background-color:transparent; width:1500px;">
+
+        <br />
+
+        <MudGrid Justify="Justify.Center">
+            <MudText Style="font-weight:bold" Color="Color.Warning" Typo="Typo.h3">@opcao</MudText>
+        </MudGrid>
+
+        <br />
+
+        <MudToolBar>
+            <MudTooltip Text="Excluir">
+                <MudIconButton Color="Color.Info" OnClick="ClickExcluir" Disabled="Condicao" Icon="@Icons.Material.Outlined.Delete" />
+            </MudTooltip>
+            <MudTooltip Text="Alterar">
+                <MudIconButton Color="Color.Info" OnClick="ClickAlterar" Disabled="Condicao" Icon="@Icons.Material.Outlined.Edit" />
+            </MudTooltip>
+            <MudTooltip Text="Salvar">
+                <MudIconButton Color="Color.Info" OnClick="ClickSalvar" Disabled="!Condicao" Icon="@Icons.Material.Outlined.Save" />
+            </MudTooltip>
+
+            <MudSpacer />
+
+            <MudSpacer />
+
+            <MudSpacer />
+
+            <MudTooltip Text="Voltar">
+                <MudIconButton Color="Color.Info" OnClick="ClickVoltar" Icon="@Icons.Outlined.KeyboardBackspace" />
+            </MudTooltip>
+        </MudToolBar>
+
+        <br />
+
+        <MudTabs Elevation="1" Centered="true" Rounded="true" PanelClass="mt-6">
+            <MudForm @ref="form" Model="@DadosTabela">
+
+                <MudGrid>
+                    <MudItem md="12" Style="display:flex;justify-content: flex-start; margin-left: 10px;">
+                        <MudText Style="font-weight:bold" Color="Color.Warning" Typo="Typo.h6">Dados</MudText>
+                    </MudItem>
+
+                    <MudItem md="5" Style="display:flex;justify-content: space-evenly">
+                        <MudTextField Variant="MudBlazor.Variant.Outlined" Label="Nome Completo" @bind-Value="@DadosTabela.TX_NOME"
+                                      MaxLength="150" Required="true" RequiredError="Campo Obrigatório" />
+                    </MudItem>
+
+                    <MudItem md="2" Style="display:flex;justify-content: space-evenly">
+                        <MudTextField Variant="MudBlazor.Variant.Outlined" Label="Idade" @bind-Value="@DadosTabela.NR_IDADE" Mask="@IDADE"
+                                      Required="true" RequiredError="Campo Obrigatório" />
+                    </MudItem>
+
+                    <MudItem md="3" Style="display:flex;justify-content: space-evenly">
+                        <MudField Variant="MudBlazor.Variant.Outlined" Label="Estado Cívil" InnerPadding="false">
+                            <MudRadioGroup @bind-SelectedOption="DadosTabela.OP_ESTADO_CIVIL" Required="true" RequiredError="Campo Obrigatório">
+                                <MudRadio Option="@("S")" Color="Color.Primary">Solteiro</MudRadio>
+                                <MudRadio Option="@("C")" Color="Color.Secondary">Casado</MudRadio>
+                            </MudRadioGroup>
+                        </MudField>
+                    </MudItem>
+
+                    <MudItem md="2" Style="display:flex;justify-content: space-evenly">
+                        <MudTextField Variant="MudBlazor.Variant.Outlined" Label="Cpf" @bind-Value="@DadosTabela.TX_CPF" Mask="@CPF" OnBlur="@ValidarCPF" Required="true" RequiredError="Campo Obrigatório" />
+                    </MudItem>
+
+                </MudGrid>
+
+                <br />
+                <br />
+
+                <MudGrid>
+
+                    <MudGrid>
+                        <MudItem md="12" Style="display:flex; justify-content: flex-start; margin-left: 10px;">
+                            <MudText Style="font-weight:bold;" Color="Color.Warning" Typo="Typo.h6">Endereço</MudText>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudItem md="2" Style="display:flex;justify-content: space-evenly">
+                        <MudTextField Variant="MudBlazor.Variant.Outlined" @bind-Value="@DadosTabela.TX_CEP" Mask="@CEP" MaxLength="8" Label="Cep" OnBlur="@LocalizarCEP" />
+                    </MudItem>
+
+                    <MudItem md="2" Style="display:flex;justify-content: space-evenly">
+                        <MudTextField Variant="MudBlazor.Variant.Outlined" @bind-Value="@DadosTabela.TX_NUMERO" MaxLength="10" Label="Número End" Required="true" RequiredError="Campo Obrigatório" />
+                    </MudItem>
+
+                    <MudItem md="3" Style="display:flex;justify-content: space-evenly">
+                        <MudTextField Variant="MudBlazor.Variant.Outlined" @bind-Value="@DadosTabela.TX_LOGRADOURO" MaxLength="100" Label="Endereço" Required="true" RequiredError="Campo Obrigatório" />
+                    </MudItem>
+
+                    <MudItem md="2" Style="display:flex;justify-content: space-evenly">
+                        <MudTextField Variant="MudBlazor.Variant.Outlined" @bind-Value="@DadosTabela.TX_BAIRRO" MaxLength="100" Label="Bairro" Required="true" RequiredError="Campo Obrigatório" />
+                    </MudItem>
+
+                    <MudItem md="2" Style="display:flex;justify-content: space-evenly">
+                        <MudTextField Variant="MudBlazor.Variant.Outlined" @bind-Value="@DadosTabela.TX_CIDADE" MaxLength="50" Label="Cidade" Required="true" RequiredError="Campo Obrigatório" />
+                    </MudItem>
+
+                    <MudItem md="1" Style="display:flex;justify-content: space-evenly">
+                        <MudTextField Variant="MudBlazor.Variant.Outlined" @bind-Value="@DadosTabela.TX_ESTADO" MaxLength="50" Label="Estado" Required="true" RequiredError="Campo Obrigatório" />
+                    </MudItem>
+
+                </MudGrid>
+
+                <br />
+                <br />
+
+                <MudGrid>
+
+                    <MudGrid>
+                        <MudItem md="12" Style="display:flex; justify-content: flex-start; margin-left: 10px;">
+                            <MudText Style="font-weight:bold;" Color="Color.Warning" Typo="Typo.h6">Contato</MudText>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudItem md="5" Style="display:flex;justify-content: space-evenly">
+                        <MudTextField Variant="MudBlazor.Variant.Outlined" Label="E-Mail" @bind-Value="@DadosTabela.TX_EMAIL"
+                                      MaxLength="150" />
+                    </MudItem>
+
+                    <MudItem md="2" Style="display:flex;justify-content: space-evenly">
+                        <MudTextField Variant="MudBlazor.Variant.Outlined" Label="Telefone" @bind-Value="@DadosTabela.TX_TELEFONE" Mask="@TELEFONE"
+                                      MaxLength="8" Required="true" RequiredError="Campo Obrigatório" />
+                    </MudItem>
+
+                </MudGrid>
+
+            </MudForm>
+
+        </MudTabs>
+    </MudPaper>
+</MudGrid>
+
+
+@code
+{
+    [Parameter] public string opcao { get; set; } = string.Empty;
+    [Parameter] public string id { get; set; } = string.Empty;
+
+    public TB_USUARIO DadosTabela = new();
+
+    MudForm form;
+
+    public bool Condicao = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (opcao == "Consulta")
+        {
+            Condicao = false;
+
+            DadosTabela = await SerCadastro.Consultar_Conta(id);
+        }
+    }
+
+    async void ClickAlterar()
+    {
+        var resultado = await SerCadastro.Alterar_Conta(DadosTabela);
+
+        if (resultado)
+            Snackbar.Add("Alterado com Sucesso", Severity.Success);
+
+        await OnInitializedAsync();
+    }
+
+
+    async void ClickExcluir()
+    {
+        var resultado = await SerCadastro.Deletar_Conta(id);
+
+        if (resultado)
+        {
+            Snackbar.Add("Deletado com Sucesso", Severity.Success);
+
+            Thread.Sleep(2000);
+
+            Navegacao.NavigateTo("/Cadastro", true);
+        }
+    }
+
+    async void ClickSalvar()
+    {
+        await form.Validate();
+
+        if (!form.IsValid)
+            return;
+
+        var resultado = await SerCadastro.Adicionar_Conta(DadosTabela);
+
+        if (resultado.StatusCode == System.Net.HttpStatusCode.OK)
+        {
+            Snackbar.Add("Incluído com Sucesso", Severity.Success);
+            DadosTabela = new();
+        }
+        else
+        {
+            var erro = JsonConvert.DeserializeObject<List<Erros>>(resultado.Content);
+
+            foreach (Erros i in erro)
+            {
+                Snackbar.Add(i.errors, Severity.Error);
+            }
+
+            return;
+        }
+
+        StateHasChanged();
+    }
+
+
+    void ClickVoltar() => Navegacao.NavigateTo("/Cadastro", true);
+
+
+    async void ValidarCPF()
+    {
+        DadosTabela.TX_CPF.Replace(".", "").Replace("-", "");
+
+        if (DadosTabela.TX_CPF.Length == 11)
+        {
+            var resultado = await SerCadastro.Consultar_Conta(id);
+
+            if (resultado == null)
+            {
+                if (CpfValidation.Validate(DadosTabela.TX_CPF))
+                    Snackbar.Add("CPF Valido", Severity.Success);
+                else
+                    Snackbar.Add("CPF Inválido", Severity.Error);
+            }
+            else
+                Snackbar.Add("CPF Já Existe No Cadastro!", Severity.Info);
+        }
+        else
+            Snackbar.Add("Informe um CPF Valido", Severity.Error);
+
+        StateHasChanged();
+    }
+
+
+    async void LocalizarCEP()
+    {
+        if (DadosTabela.TX_CEP.Length == 8)
+        {
+            DadosTabela = await SerLocalizar.CepUsuario(DadosTabela);
+
+            if (DadosTabela.TX_CEP != string.Empty)
+                Snackbar.Add("CEP Valido", Severity.Success);
+            else
+                Snackbar.Add("CEP Inválido", Severity.Error);
+        }
+        else
+            Snackbar.Add("Informe uma CEP Valido", Severity.Error);
+
+        StateHasChanged();
+    }
+
+
+    public PatternMask CEP = new PatternMask("00000-000")
+        {
+            Placeholder = '_',
+            CleanDelimiters = true
+        };
+
+    public PatternMask CPF = new PatternMask("000.000.000-00")
+        {
+            Placeholder = '_',
+            CleanDelimiters = true
+        };
+
+    public PatternMask IDADE = new PatternMask("00")
+        {
+            Placeholder = '_',
+            CleanDelimiters = true
+        };
+
+    public PatternMask TELEFONE = new PatternMask("(00)00000-0000")
+        {
+            Placeholder = '_',
+            CleanDelimiters = true
+        };
+}
+
+

@@ -1,0 +1,148 @@
+﻿@page "/Cadastro/"
+
+@using System.Diagnostics
+@using ERPOhama.Service
+
+@using static Category.Classes.Localizar
+@using static Category.Classes.Cadastro
+
+@inject ServiceCadastro SerCadastro
+
+@inject NavigationManager Navegacao
+
+@inject ISnackbar Snackbar
+
+
+<MudPaper Elevation="0" Class="pa-4">
+
+    <br />
+
+    <MudToolBar>
+        <MudTooltip Text="Incluir">
+            <MudButton DisableElevation="false" Size="Size.Small" Variant="MudBlazor.Variant.Filled" Class="border-2 py-4 px-4"
+                       OnClick="ClickIncluir" StartIcon="@Icons.Material.Outlined.Add"
+                       Style="@($"color:{Colors.Shades.White}; background:{Colors.Blue.Darken3};")">
+                Adicionar
+            </MudButton>
+        </MudTooltip>
+    </MudToolBar>
+
+    <br />
+
+    <MudExpansionPanels>
+        <MudExpansionPanel>
+            <TitleContent>
+                <div class="d-flex">
+                    <MudText Style="font-weight:bold" Color="Color.Warning" Typo="Typo.h5">Click Aqui para Pesquisar um Usuário</MudText>
+                </div>
+            </TitleContent>
+            <ChildContent>
+                <div class="input-group">
+
+                    <MudRadioGroup @bind-SelectedOption="PorCodigo">
+                        <MudRadio Option="true" Color="Color.Primary" Dense="true">Cpf</MudRadio>
+                        <MudRadio Option="false" Color="Color.Secondary" Dense="false">Nome</MudRadio>
+                    </MudRadioGroup>
+
+                    <MudText>&nbsp;&nbsp; &nbsp; &nbsp; </MudText>
+
+                    @if (PorCodigo)
+                    {
+                        <MudTextField OnKeyUp="@(()=>Pesquisar(PorCodigo, PesquisarId))" Mask="@(new PatternMask("000.000.000-00"))" @bind-Value="@PesquisarId"
+                                  DisableUnderLine="true" MaxLength="11" ReadOnly="false" Label="Pesquisar" Variant="MudBlazor.Variant.Outlined" />
+                    }
+                    else
+                    {
+                        <MudTextField OnKeyUp="@(()=>Pesquisar(PorCodigo, PesquisarId))" @bind-Value="@PesquisarId"
+                                  DisableUnderLine="true" MaxLength="150" ReadOnly="false" Label="Pesquisar" Variant="MudBlazor.Variant.Outlined" />
+                    }
+
+                    <MudText>&nbsp;&nbsp; &nbsp; &nbsp; </MudText>
+
+                    <MudButton Style="background-color:rgb(23, 56, 90); color:white" Size="Size.Large" StartIcon="@Icons.Material.Rounded.Search" Variant="MudBlazor.Variant.Filled"
+                               OnClick="@(()=>Pesquisar(PorCodigo, PesquisarId))"> Pesquisar </MudButton>
+
+                </div>
+            </ChildContent>
+        </MudExpansionPanel>
+    </MudExpansionPanels>
+
+    <br />
+
+    <MudDataGrid T="TB_USUARIO" Items="@DadosTabela"
+                 ReadOnly="false" RowsPerPage="10" Filterable="true" Groupable="true"
+                 Outlined="true" Striped="true" Bordered="true" Dense="true" Hover=true
+                 RowClick="Chamar">
+
+        <Columns>
+
+            <PropertyColumn Property="x => x.TX_NOME" Title="Nome Completo" />
+
+            <PropertyColumn Property="x => x.NR_IDADE" Title="Idade" />
+
+            <PropertyColumn Property="x => x.OP_ESTADO_CIVIL" Title="Estado Cívil" />
+
+        </Columns>
+
+        <PagerContent>
+            <br />
+            <div class="d-flex flex-column align-center">
+                <MudDataGridPager Class="py-4 px-6 mx-4 rounded-sm" T="TB_USUARIO" />
+            </div>
+            <br />
+        </PagerContent>
+    </MudDataGrid>
+
+</MudPaper>
+
+
+@code
+{
+    public List<TB_USUARIO> DadosTabela = new();
+
+    public bool PorCodigo { get; set; } = true;
+
+    public string PesquisarId = string.Empty;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        DadosTabela = await SerCadastro.Listar_Conta();
+
+        StateHasChanged();
+    }
+
+    void ClickIncluir() => Navegacao.NavigateTo($"/Cadastro/Dados/Inclusao/''", true);
+
+
+    private void Chamar(DataGridRowClickEventArgs<TB_USUARIO> dados)
+    {
+        Navegacao.NavigateTo($"/Cadastro/Dados/Consulta/{dados.Item.ID.ToString()}", true);
+    }
+
+
+    private async Task Pesquisar(bool bPorCodigo, string Id)
+    {
+        if (!string.IsNullOrEmpty(Id))
+        {
+            try
+            {
+                Id = Id.Replace(".", "").Replace("-", "");
+
+                DadosTabela = await SerCadastro.Pesquisar_Conta((bPorCodigo ? TipoPesquisa.PorCpf : TipoPesquisa.PorNome), Id);
+
+                if (DadosTabela.Count > 0)
+                    Snackbar.Add("Dados encontrados!", Severity.Info);
+                else
+                {
+                    DadosTabela = new();
+                    Snackbar.Add("Dados não encontrados!", Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+        }
+    }
+}
